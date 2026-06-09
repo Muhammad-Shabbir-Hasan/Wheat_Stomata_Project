@@ -1,11 +1,34 @@
 #include <Arduino.h>
 #include "Config.h"
 #include "StatusLED.h"
-enum Mode{OK,PROC,WARN,FATAL};
-static Mode mode=PROC;
-void initStatusLED(){pinMode(STATUS_LED,OUTPUT);}
-void setLedOK(){mode=OK;}
-void setLedProcessing(){mode=PROC;}
-void setLedWarning(){mode=WARN;}
-void setLedFatal(){mode=FATAL;}
-void updateStatusLED(){}
+
+static LedMode mode = LED_MODE_PROCESSING;
+
+void initStatusLED()
+{
+    pinMode(STATUS_LED, OUTPUT);
+}
+
+void setLedOK()
+{
+    mode = LED_MODE_OK;
+}
+
+void setLedProcessing()
+{
+    mode = LED_MODE_PROCESSING;
+}
+
+void setLedWarning()
+{
+    mode = LED_MODE_WARNING;
+}
+
+void setLedFatal()
+{
+    mode = LED_MODE_FATAL;
+}
+
+void updateStatusLED()
+{
+}
