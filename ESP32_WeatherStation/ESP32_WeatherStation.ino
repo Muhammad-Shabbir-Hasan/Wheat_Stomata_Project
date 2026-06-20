@@ -286,6 +286,244 @@ bool processStartupMenu()
 //--------------------------------------------------
 bool uploadPendingData()
 {
+    if(!storage.hasData())
+    {
+        Serial.println(
+            "[INFO] No Pending Data");
+
+        return true;
+    }
+
+    Serial.println(
+        "[INFO] Pending Data Found");
+
+    String pendingData =
+        storage.readAllData();
+
+    //--------------------------------------------------
+    // Build ThingsBoard History Batch
+    //--------------------------------------------------
+
+    const size_t MAX_BATCH_SIZE = 2500;
+
+    DynamicJsonDocument batchDoc(
+        8192);
+
+    JsonArray batch =
+        batchDoc.to<JsonArray>();
+
+    uint64_t baseTs =
+        (uint64_t)time(nullptr)
+        * 1000ULL;
+
+    uint32_t recordIndex = 0;
+
+    int uploadedBatches = 0;
+
+    int startPos = 0;
+
+    while(startPos < pendingData.length())
+    {
+        int endPos =
+            pendingData.indexOf(
+                '\n',
+                startPos);
+
+        if(endPos < 0)
+        {
+            endPos =
+                pendingData.length();
+        }
+
+        String line =
+            pendingData.substring(
+                startPos,
+                endPos);
+
+        line.trim();
+
+        if(line.length() > 0)
+        {
+            //--------------------------------------------------
+            // Parse Stored JSON
+            //--------------------------------------------------
+
+            DynamicJsonDocument recordDoc(
+                1024);
+
+            if(deserializeJson(
+                    recordDoc,
+                    line) == DeserializationError::Ok)
+            {
+                JsonObject item =
+                    batch.add<JsonObject>();
+
+                item["ts"] =
+                    baseTs +
+                    recordIndex;
+
+                JsonObject values =
+                    item.createNestedObject(
+                        "values");
+
+                for(JsonPair kv :
+                        recordDoc.as<JsonObject>())
+                {
+                    if(strcmp(
+                           kv.key().c_str(),
+                           "timestamp")
+                           == 0)
+                    {
+                        continue;
+                    }
+
+                    values[kv.key()] =
+                        kv.value();
+                }
+
+                recordIndex++;
+
+                //--------------------------------------------------
+                // Check Batch Size
+                //--------------------------------------------------
+
+                String testPayload;
+
+                serializeJson(
+                    batchDoc,
+                    testPayload);
+
+                if(testPayload.length()
+                        > MAX_BATCH_SIZE)
+                {
+                    batch.remove(
+                        batch.size() - 1);
+
+                    String uploadPayload;
+
+                    serializeJson(
+                        batchDoc,
+                        uploadPayload);
+
+                    Serial.print(
+                        "[INFO] Uploading History Batche : ");
+
+                    Serial.println(
+                        uploadPayload.length());
+                                            
+
+                    if(!cloud.upload(
+                            uploadPayload))
+                    {
+                        Serial.println(
+                            "[WARNING] History Upload Failed");
+
+                        return false;
+                    }
+
+                    uploadedBatches++;
+
+                    batchDoc.clear();
+
+                    batch =
+                        batchDoc.to<JsonArray>();
+
+                    JsonObject newItem =
+                        batch.add<JsonObject>();
+
+                    newItem["ts"] =
+                        baseTs +
+                        recordIndex;
+
+                    JsonObject newValues =
+                        newItem.createNestedObject(
+                            "values");
+
+                    for(JsonPair kv :
+                            recordDoc.as<JsonObject>())
+                    {
+                        if(strcmp(
+                               kv.key().c_str(),
+                               "timestamp")
+                               == 0)
+                        {
+                            continue;
+                        }
+
+                        newValues[kv.key()] =
+                            kv.value();
+                    }
+                }
+            }
+        }
+
+        startPos =
+            endPos + 1;
+    }
+
+    //--------------------------------------------------
+    // Final Batch
+    //--------------------------------------------------
+
+    if(batch.size() > 0)
+    {
+        String uploadPayload;
+
+        serializeJson(
+            batchDoc,
+            uploadPayload);
+
+        Serial.print(
+            "[INFO] Uploading Final History Batch : ");
+
+        Serial.println(
+            uploadPayload.length());
+
+
+
+        Serial.print(
+            "[INFO] Uploading Final History ---------------Batch : ");
+
+        Serial.println(
+            uploadPayload);
+
+        if(!cloud.upload(
+                uploadPayload))
+        {
+            Serial.println(
+                "[WARNING] Final History Upload Failed");
+
+            return false;
+        }
+
+        uploadedBatches++;
+    }
+
+    //--------------------------------------------------
+    // Success
+    //--------------------------------------------------
+
+    storage.clear();
+
+    Serial.print(
+        "[INFO] Uploaded History Batches : ");
+
+    Serial.println(
+        uploadedBatches);
+
+    Serial.println(
+        "[INFO] Pending Data Uploaded");
+
+    Serial.println(
+        "[INFO] Storage Cleared");
+
+    return true;
+}
+
+
+/*
+bool uploadPendingData()
+{
     //--------------------------------------------------
     // Check Pending Data
     //--------------------------------------------------
@@ -313,6 +551,12 @@ bool uploadPendingData()
 
     Serial.println(
         pendingData.length());
+
+    Serial.println(
+    "[INFO] Pending Data : ");
+
+    Serial.println(
+        pendingData);
 
     //--------------------------------------------------
     // Upload
@@ -344,7 +588,7 @@ bool uploadPendingData()
 
     return true;
 }
-
+*/
 
 //--------------------------------------------------
 // Acquisition Cycle
@@ -398,6 +642,10 @@ void runCycle()
     payload += String(
         ENV_SUIT_NUMBER);
 
+    payload += ",\"sts\":\"";
+    payload += wifi.getDateTime();
+    payload += "\"";
+    
     payload += ",\"position\":\"";
     payload += SENSOR_LOCATION;
     payload += "\"";

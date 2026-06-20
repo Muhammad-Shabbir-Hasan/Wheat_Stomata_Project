@@ -3,7 +3,7 @@
 #ifndef CLOUD_UPLOADER_H
 #define CLOUD_UPLOADER_H
 
-#define MQQT_BUFFER_SIZE 3000
+#define MQQT_BUFFER_SIZE 3072
 
 
 #include <Arduino.h>

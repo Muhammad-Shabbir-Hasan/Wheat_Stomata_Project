@@ -86,7 +86,7 @@ bool CloudUploader::upload(
         return false;
     }
 
-    Serial.print( "Payload Size = ");
+    Serial.print( "[ThingsBoard] Payload Size = ");
 
     Serial.println( payload.length());
 

@@ -6,20 +6,15 @@
 //--------------------------------------------------
 
 #define ENV_SUIT_NUMBER 1
-
-#define SENSOR_LOCATION_TOP      "Top"
-#define SENSOR_LOCATION_MIDDLE   "Middle"
-#define SENSOR_LOCATION_BOTTOM   "Bottom"
-
-#define SENSOR_LOCATION SENSOR_LOCATION_MIDDLE
-
-
+#define SENSOR_LOCATION "Middle"
 #define THINGSBOARD_SERVER "thingsboard.cloud"
 #define THINGSBOARD_TOKEN  "XaskJY8sg6pnMaZpM0oJ"
 
+#define SAMPLE_INTERVAL_MS 30000
+
+
 
 #define STATUS_LED 2
-#define SAMPLE_INTERVAL_MS 30000
 #define SENSOR_RX 16
 #define SENSOR_TX 17
 
