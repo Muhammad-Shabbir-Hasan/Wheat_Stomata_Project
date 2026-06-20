@@ -4,6 +4,11 @@
 #include "StorageManager.h"
 #include "CloudUploader.h"
 #include "MuxManager.h"
+#include "SolarSensor.h"
+#include "CO2Sensor.h"
+#include "GPSSensor.h"
+
+
 
 #include <ArduinoJson.h>
 
@@ -35,6 +40,14 @@ StorageManager storage;
 CloudUploader cloud;
 
 MuxManager mux;
+
+
+
+SolarSensor solar;
+CO2Sensor CO2;
+GPSSensor GPS;
+
+
 
 //--------------------------------------------------
 // Sensor Data
@@ -143,6 +156,60 @@ bool initializeSystem()
 
         return false;
     }
+
+    //--------------------------------------------------
+    // Solar Sensor
+    //--------------------------------------------------
+
+    #ifdef SENSOR_TOP
+
+        Serial.println(
+            "[INFO] Initializing Solar Sensor");
+
+        if(!solar.begin())
+        {
+            Serial.println(
+                "[ERROR] Solar Sensor Init Failed");
+
+            return false;
+        }
+
+    #endif
+
+
+    #ifdef SENSOR_MIDDLE
+
+        Serial.println(
+            "[INFO] Initializing CO2 Sensor");
+
+        if(!solar.begin())
+        {
+            Serial.println(
+                "[ERROR] CO2 Sensor Init Failed");
+
+            return false;
+        }
+
+    #endif
+
+
+
+    #ifdef SENSOR_BOTTOM
+
+        Serial.println(
+            "[INFO] Initializing GPS Sensor");
+
+        if(!solar.begin())
+        {
+            Serial.println(
+                "[ERROR] GPS Sensor Init Failed");
+
+            return false;
+        }
+
+    #endif
+
+
 
     //--------------------------------------------------
     // Complete
@@ -628,6 +695,86 @@ void runCycle()
     env_data =
         mux.getAllSensorValues();
 
+    
+    #ifdef SENSOR_TOP
+
+        float solarRadiation = 0.0;
+
+        if(!solar.read())
+        {
+            Serial.println(
+                "[WARNING] Solar Sensor Read Failed");
+
+            setLedWarning();
+        }
+        else
+        {
+            solarRadiation =
+                solar.getRadiation();
+        }
+
+    #endif
+    
+    
+    
+    #ifdef SENSOR_MIDDLE
+
+        int CO2_PPM = 0.0;
+
+        if(!CO2.read())
+        {
+            Serial.println(
+                "[WARNING] CO2 Sensor Read Failed");
+
+            setLedWarning();
+        }
+        else
+        {
+            CO2_PPM =
+                CO2.getPPM();
+        }
+
+    #endif   
+    
+     
+    
+    #ifdef SENSOR_BOTTOM
+
+        float Lat = 0.0;
+        float Long = 0.0;
+        float HDOP = 0.0;
+        float VDOP = 0.0;
+        
+        
+
+        if(!GPS.read())
+        {
+            Serial.println(
+                "[WARNING] GPS Sensor Read Failed");
+
+            setLedWarning();
+        }
+        else
+        {
+            Lat =
+                GPS.getLat();
+
+            Long =
+                GPS.getLong();
+
+            HDOP =
+                GPS.getHDOP();
+
+            VDOP =
+                GPS.getVDOP();
+        
+        
+        }
+
+    #endif      
+    
+    
+    
     //--------------------------------------------------
     // Build ThingsBoard JSON
     //--------------------------------------------------
@@ -649,6 +796,42 @@ void runCycle()
     payload += ",\"position\":\"";
     payload += SENSOR_LOCATION;
     payload += "\"";
+
+    #ifdef SENSOR_TOP
+        payload += ",\"solar_radiation\":";
+        payload += String(
+            solarRadiation);
+
+    #endif
+
+
+    
+    #ifdef SENSOR_MIDDLE
+        payload += ",\"CO2_PPM\":";
+        payload += String(
+            CO2_PPM);
+
+    #endif
+
+
+    #ifdef SENSOR_BOTTOL
+        payload += ",\"Lat\":";
+        payload += String(
+            Lat);
+
+        payload += ",\"Long\":";
+        payload += String(
+            Long);
+
+        payload += ",\"HDOP\":";
+        payload += String(
+            HDOP);
+
+        payload += ",\"VDOP\":";
+        payload += String(
+            HDOP);
+
+    #endif
 
     for(uint8_t i=0; i<MUX_CHANNELS; i++)
     {

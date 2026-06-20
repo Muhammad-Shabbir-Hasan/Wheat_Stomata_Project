@@ -5,10 +5,40 @@
 // Deployment Configuration
 //--------------------------------------------------
 
-#define ENV_SUIT_NUMBER 1
+
+
+//#define SENSOR_TOP
+//#define SENSOR_MIDDLE
+#define SENSOR_BOTTOM
+
+//--------------------------------------------------
+// Auto Location String
+//--------------------------------------------------
+
+#ifdef SENSOR_TOP
+
+#define SENSOR_LOCATION "Top"
+
+#elif defined(SENSOR_MIDDLE)
+
 #define SENSOR_LOCATION "Middle"
+
+#elif defined(SENSOR_BOTTOM)
+
+#define SENSOR_LOCATION "Bottom"
+
+#else
+
+#define SENSOR_LOCATION "Middle"
+
+#endif
+
+#define ENV_SUIT_NUMBER 1
+
+
+
 #define THINGSBOARD_SERVER "thingsboard.cloud"
-#define THINGSBOARD_TOKEN  "XaskJY8sg6pnMaZpM0oJ"
+#define THINGSBOARD_TOKEN  "XaskJY8sg6pnMaZpM0oJ"   // Middle Device Suit 1
 
 #define SAMPLE_INTERVAL_MS 30000
 
