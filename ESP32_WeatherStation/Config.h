@@ -42,11 +42,8 @@
 
 #define SAMPLE_INTERVAL_MS 30000
 
-
-
 #define STATUS_LED 2
-#define SENSOR_RX 16
-#define SENSOR_TX 17
+
 
 
 
@@ -64,6 +61,13 @@
 #define MUX_SIG    34
 
 #define MUX_CHANNELS 16
+
+
+
+//--------------------------------------------------
+// UART
+//--------------------------------------------------
+
 
 // =============================
 // Serial
