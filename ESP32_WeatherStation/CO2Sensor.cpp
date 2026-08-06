@@ -16,7 +16,7 @@ static int CO2_PPM = 0;
 bool CO2Sensor::begin()
 {
     CO2_SERIAL.begin(
-        9600,
+        9600, 
         SERIAL_8N1,
         CO2_RX_PIN,
         CO2_TX_PIN);
@@ -36,10 +36,6 @@ bool CO2Sensor::read()
 
     uint8_t response[EXPECTED_BYTES];
 
-    //--------------------------------------------------
-    // Try 5 Times
-    //--------------------------------------------------
-
     for(uint8_t attempt = 0;
         attempt < 5;
         attempt++)
@@ -56,12 +52,13 @@ bool CO2Sensor::read()
         //--------------------------------------------------
         // Send Command
         //--------------------------------------------------
+        CO2_SERIAL.flush();
 
         CO2_SERIAL.write(
             CO2_REQUEST_FRAME,
             sizeof(CO2_REQUEST_FRAME));
 
-        CO2_SERIAL.flush();
+        delay(100);
 
         //--------------------------------------------------
         // Wait For Response
@@ -77,14 +74,26 @@ bool CO2Sensor::read()
         {
             while(CO2_SERIAL.available())
             {
-                if(count < EXPECTED_BYTES)
-                {
-                    response[count++] =
-                        CO2_SERIAL.read();
-                }
-                else
-                {
+                uint8_t b =
                     CO2_SERIAL.read();
+
+                //--------------------------------------------------
+                // Synchronize To 0xFF
+                //--------------------------------------------------
+
+                if(count == 0)
+                {
+                    if(b != 0xFF)
+                    {
+                        continue;
+                    }
+                }
+
+                response[count++] = b;
+
+                if(count >= EXPECTED_BYTES)
+                {
+                    break;
                 }
             }
 
@@ -110,10 +119,26 @@ bool CO2Sensor::read()
         }
 
         //--------------------------------------------------
-        // Extract Data
+        // Verify Header
+        //--------------------------------------------------
+
+        if(response[0] != 0xFF ||
+           response[1] != 0x86)
+        {
+            Serial.print(
+                "[CO2] Invalid Header. Attempt ");
+
+            Serial.println(
+                attempt + 1);
+
+            continue;
+        }
+
+        //--------------------------------------------------
+        // Extract CO2
         //
-        // Byte 5 = MSB
-        // Byte 6 = LSB
+        // Byte2 = MSB
+        // Byte3 = LSB
         //--------------------------------------------------
 
         uint16_t value =
@@ -142,6 +167,8 @@ bool CO2Sensor::read()
 
     return false;
 }
+
+
 
 //--------------------------------------------------
 // Get _PPM

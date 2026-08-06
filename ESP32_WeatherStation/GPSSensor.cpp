@@ -58,6 +58,7 @@ bool GPSSensor::read()
                 GPS_SERIAL.readStringUntil('\n');
 
             line.trim();
+            Serial.println(line);
 
             if(line.startsWith("$GPGGA") ||
                line.startsWith("$GNGGA"))
@@ -240,20 +241,20 @@ bool GPSSensor::read()
 
 double GPSSensor::getLat()
 {
-    return latitude;
+    return latitude * 10000000;
 }
 
 double GPSSensor::getLong()
 {
-    return longitude;
+    return longitude * 10000000;
 }
 
 float GPSSensor::getHDOP()
 {
-    return hdop;
+    return hdop * 1000;
 }
 
 float GPSSensor::getVDOP()
 {
-    return vdop;
+    return vdop * 1000;
 }

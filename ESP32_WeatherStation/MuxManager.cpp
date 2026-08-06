@@ -10,6 +10,123 @@
 
 // Example values.
 // Change according to actual sensor ranges.
+/*
+const float SENSOR_MIN[MUX_CHANNELS] =
+{
+    
+    0.0,     // CH3
+    0.0     // CH3
+
+};
+
+const float SENSOR_MAX[MUX_CHANNELS] =
+{
+   
+   
+    100.0,   // H2
+    100.0   // H2
+
+};
+
+*/
+
+
+
+#ifdef SENSOR_TOP
+const char* SENSOR_NAMES[MUX_CHANNELS] =
+{
+    "AQ",      // MQ135 (Air Quality)
+    "H2",      // MQ8   (Hydrogen)
+    "CH4",     // MQ4   (Methane)
+    "CO",      // MQ7   (Carbon Monoxide)
+    "LPG",     // MQ9   (Liquefied Petroleum Gas)
+    "AirTemp",
+    "AirHumidity",
+    "env8",
+    "env9",
+    "env10",
+    "env11",
+    "env12",
+    "env13",
+    "env14",
+    "env15",
+    "env16"
+
+};
+
+#elif defined(SENSOR_MIDDLE)
+
+const char* SENSOR_NAMES[MUX_CHANNELS] =
+{
+    "AQ",      // MQ135 (Air Quality)
+    "H2",      // MQ8   (Hydrogen)
+    "CH4",     // MQ4   (Methane)
+    "CO",      // MQ7   (Carbon Monoxide)
+    "LPG",     // MQ9   (Liquefied Petroleum Gas)
+    "CO2",      // MH Z19 (Carbon Dioxide)  
+    "O3",      // MQ131 (Ozone)
+    "VOC",     // MQ138 (Volatile Organic Compounds)
+    "NH3",     // MQ137 (Ammonia)
+    "AirTemp",
+    "AirHumidity",
+    "env12",
+    "env13",
+    "env14",
+    "env15",
+    "env16"
+
+};
+
+
+#elif defined(SENSOR_BOTTOM)
+
+const char* SENSOR_NAMES[MUX_CHANNELS] =
+{
+    "AQ",      // MQ135 (Air Quality)
+    "H2",      // MQ8   (Hydrogen)
+    "CH4",     // MQ4   (Methane)
+    "CO",      // MQ7   (Carbon Monoxide)
+    "LPG",     // MQ9   (Liquefied Petroleum Gas)
+    "SM1",
+    "SM2",
+    "AirTemp",
+    "AirHumidity",
+    "SoilTemp",
+    "SoilHumidity",
+    "env12",
+    "env13",
+    "env14",
+    "env15",
+    "env16"
+
+};
+
+#else
+const char* SENSOR_NAMES[MUX_CHANNELS] =
+{
+    "AQ",      // MQ135 (Air Quality)
+    "H2",      // MQ8   (Hydrogen)
+    "CH4",     // MQ4   (Methane)
+    "CO",      // MQ7   (Carbon Monoxide)
+    "LPG",     // MQ9   (Liquefied Petroleum Gas)
+    "CO2",      // MH Z19 (Carbon Dioxide)  
+    "O3",      // MQ131 (Ozone)
+    "VOC",     // MQ138 (Volatile Organic Compounds)
+    "NH3",     // MQ137 (Ammonia)
+    "AirTemp",
+    "AirHumidity",
+    "env12",
+    "env13",
+    "env14",
+    "env15",
+    "env16"
+
+};
+
+#endif
+
+
+
 
 const float SENSOR_MIN[MUX_CHANNELS] =
 {
@@ -33,23 +150,24 @@ const float SENSOR_MIN[MUX_CHANNELS] =
 
 const float SENSOR_MAX[MUX_CHANNELS] =
 {
-    1000.0, // CO
-    5000.0, // CO2
-    100.0,  // NH3
-    100.0,   // H2
-    1000.0, // CO
-    5000.0, // CO2
-    100.0,  // NH3
-    100.0,   // H2
-    1000.0, // CO
-    5000.0, // CO2
-    100.0,  // NH3
-    100.0,   // H2
-    1000.0, // CO
-    5000.0, // CO2
-    100.0,  // NH3
-    100.0   // H2
+    4095.0, // CO
+    4095.0, // CO2
+    4095.0,  // NH3
+    4095.0,   // H2
+    4095.0, // CO
+    4095.0, // CO2
+    4095.0,  // NH3
+    4095.0,   // H2
+    4095.0, // CO
+    4095.0, // CO2
+    4095.0,  // NH3
+    4095.0,   // H2
+    4095.0, // CO
+    4095.0, // CO2
+    4095.0,  // NH3
+    4095.0   // H2
 };
+
 
 bool MuxManager::begin()
 {
@@ -87,7 +205,21 @@ float MuxManager::readChannel(uint8_t channel)
 
     selectChannel(channel);
 
-    int adc = analogRead(MUX_SIG);
+    int adc = analogRead(MUX_SIG); // waste 1st sample
+
+    long sum = 0;
+
+    for(int i = 0;
+        i < NUM_SAMPLES;
+        i++)
+    {
+        sum += analogRead(MUX_SIG);
+
+        delay(SAMPLE_DELAY_MS);
+    }
+
+    adc = sum / NUM_SAMPLES;
+
 
     float voltage =
         ((float)adc / 4095.0) * 3.3;
@@ -100,7 +232,8 @@ float MuxManager::readChannel(uint8_t channel)
         SENSOR_MAX[channel]
     );
 
-    sensorValues[channel] = value;
+    //sensorValues[channel] = value;
+    sensorValues[channel] = adc;        //Loading raw data
 
     Serial.print("[MUX] CH");
     Serial.print(channel);

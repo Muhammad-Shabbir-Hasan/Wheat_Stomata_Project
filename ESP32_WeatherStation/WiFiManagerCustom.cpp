@@ -6,8 +6,11 @@
 //const char* WIFI_SSID     = "uofrGuest";
 //const char* WIFI_PASSWORD = "";
 
-const char* WIFI_SSID     = "iWorld";
-const char* WIFI_PASSWORD = "123456789";
+//const char* WIFI_SSID     = "iWorld";
+//const char* WIFI_PASSWORD = "123456789";
+
+const char* WIFI_SSID     = "PMILab_Env";
+const char* WIFI_PASSWORD = "PMIlab@123";
 
 
 bool WiFiManagerCustom::begin()
@@ -44,7 +47,7 @@ bool WiFiManagerCustom::connect()
     Serial.print("[WIFI] IP: ");
     Serial.println(WiFi.localIP());
 
-    return updateTime();
+    return 1; //updateTime();
 }
 
 bool WiFiManagerCustom::updateTime()

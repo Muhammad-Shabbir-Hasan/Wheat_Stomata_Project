@@ -1,36 +1,18 @@
 #pragma once
-#pragma once
 
-#ifndef SOLAR_SENSOR_H
-#define SOLAR_SENSOR_H
+#ifndef DHT_SENSOR_H
+#define DHT_SENSOR_H
 
 #include <Arduino.h>
+#include <DHT.h>
 
+#ifndef DHT_PIN
+#define DHT_PIN 14
+#endif
 
+#define DHT_TYPE DHT11
 
-#define SOLAR_SERIAL Serial2
-
-#define SOLAR_RX_PIN 16
-#define SOLAR_TX_PIN 17
-
-//--------------------------------------------------
-// Modbus Command
-//--------------------------------------------------
-
-static const uint8_t SOLAR_RADIATION_REQUEST_FRAME[8] =
-{
-    0x01,
-    0x03,
-    0x00,
-    0x00,
-    0x00,
-    0x01,
-    0x84,
-    0x0A
-};
-
-
-class SolarSensor
+class DHTSensor
 {
 public:
 
@@ -47,10 +29,22 @@ public:
     bool read();
 
     //--------------------------------------------------
-    // Get Data
+    // Getters
     //--------------------------------------------------
 
-    float getRadiation();
+    float getTemperature();
+
+    float getHumidity();
+
+private:
+
+    DHT dht =
+        DHT(DHT_PIN,
+            DHT_TYPE);
+
+    float temperature = 0.0;
+
+    float humidity = 0.0;
 };
 
 #endif

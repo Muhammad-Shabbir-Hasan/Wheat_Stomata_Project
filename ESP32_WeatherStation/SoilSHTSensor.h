@@ -1,36 +1,17 @@
 #pragma once
-#pragma once
 
-#ifndef SOLAR_SENSOR_H
-#define SOLAR_SENSOR_H
+#ifndef SOIL_SHT_SENSOR_H
+#define SOIL_SHT_SENSOR_H
 
 #include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_SHT31.h>
+
+#define I2C_SDA_PIN     21
+#define I2C_SCL_PIN     19
 
 
-
-#define SOLAR_SERIAL Serial2
-
-#define SOLAR_RX_PIN 16
-#define SOLAR_TX_PIN 17
-
-//--------------------------------------------------
-// Modbus Command
-//--------------------------------------------------
-
-static const uint8_t SOLAR_RADIATION_REQUEST_FRAME[8] =
-{
-    0x01,
-    0x03,
-    0x00,
-    0x00,
-    0x00,
-    0x01,
-    0x84,
-    0x0A
-};
-
-
-class SolarSensor
+class SoilSHTSensor
 {
 public:
 
@@ -47,10 +28,20 @@ public:
     bool read();
 
     //--------------------------------------------------
-    // Get Data
+    // Getters
     //--------------------------------------------------
 
-    float getRadiation();
+    float getTemperature();
+
+    float getHumidity();
+
+private:
+
+    Adafruit_SHT31 sht31;
+
+    float soilTemperature = 0.0;
+
+    float soilHumidity = 0.0;
 };
 
 #endif

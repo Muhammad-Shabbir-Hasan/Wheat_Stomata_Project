@@ -7,9 +7,13 @@
 
 
 #define CO2_SERIAL Serial2
-
 #define CO2_RX_PIN 16
 #define CO2_TX_PIN 17
+
+//#define CO2_SERIAL Serial0
+//#define CO2_RX_PIN 3
+//#define CO2_TX_PIN 1
+
 
 
 //--------------------------------------------------
@@ -29,6 +33,21 @@ static const uint8_t CO2_REQUEST_FRAME[9] =
     0x79
 };
 
+
+/*
+static const uint8_t CO2_REQUEST_FRAME[9] =
+{
+    0xFF,
+    0x86,
+    0x01,
+    0xF4,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x49
+};
+*/
 
 class CO2Sensor
 {

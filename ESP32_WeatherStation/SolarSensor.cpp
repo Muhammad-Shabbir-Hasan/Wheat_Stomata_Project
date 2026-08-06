@@ -29,16 +29,11 @@ bool SolarSensor::begin()
 //--------------------------------------------------
 // Read Sensor
 //--------------------------------------------------
-
 bool SolarSensor::read()
 {
     const uint8_t EXPECTED_BYTES = 7;
 
     uint8_t response[EXPECTED_BYTES];
-
-    //--------------------------------------------------
-    // Try 5 Times
-    //--------------------------------------------------
 
     for(uint8_t attempt = 0;
         attempt < 5;
@@ -52,7 +47,7 @@ bool SolarSensor::read()
         {
             SOLAR_SERIAL.read();
         }
-
+        SOLAR_SERIAL.flush();
         //--------------------------------------------------
         // Send Command
         //--------------------------------------------------
@@ -61,7 +56,7 @@ bool SolarSensor::read()
             SOLAR_RADIATION_REQUEST_FRAME,
             sizeof(SOLAR_RADIATION_REQUEST_FRAME));
 
-        SOLAR_SERIAL.flush();
+        delay(100);
 
         //--------------------------------------------------
         // Wait For Response
@@ -77,14 +72,26 @@ bool SolarSensor::read()
         {
             while(SOLAR_SERIAL.available())
             {
-                if(count < EXPECTED_BYTES)
-                {
-                    response[count++] =
-                        SOLAR_SERIAL.read();
-                }
-                else
-                {
+                uint8_t b =
                     SOLAR_SERIAL.read();
+
+                //--------------------------------------------------
+                // Synchronize To 0x01
+                //--------------------------------------------------
+
+                if(count == 0)
+                {
+                    if(b != 0x01)
+                    {
+                        continue;
+                    }
+                }
+
+                response[count++] = b;
+
+                if(count >= EXPECTED_BYTES)
+                {
+                    break;
                 }
             }
 
@@ -110,16 +117,33 @@ bool SolarSensor::read()
         }
 
         //--------------------------------------------------
+        // Verify Header
+        //--------------------------------------------------
+
+        if(response[0] != 0x01 ||
+           response[1] != 0x03 ||
+           response[2] != 0x02)
+        {
+            Serial.print(
+                "[Solar] Invalid Header. Attempt ");
+
+            Serial.println(
+                attempt + 1);
+
+            continue;
+        }
+
+        //--------------------------------------------------
         // Extract Data
         //
-        // Byte 5 = MSB
-        // Byte 6 = LSB
+        // Byte3 = MSB
+        // Byte4 = LSB
         //--------------------------------------------------
 
         uint16_t value =
-            ((uint16_t)response[4] << 8)
+            ((uint16_t)response[3] << 8)
             |
-            response[5];
+            response[4];
 
         solarRadiation =
             (float)value;
@@ -142,6 +166,7 @@ bool SolarSensor::read()
 
     return false;
 }
+
 
 //--------------------------------------------------
 // Get Radiation

@@ -7,9 +7,8 @@
 #include "SolarSensor.h"
 #include "CO2Sensor.h"
 #include "GPSSensor.h"
-
-
-
+#include "DHT11Sensor.h"
+#include "SoilSHTSensor.h"
 #include <ArduinoJson.h>
 
 //--------------------------------------------------
@@ -46,7 +45,8 @@ MuxManager mux;
 SolarSensor solar;
 CO2Sensor CO2;
 GPSSensor GPS;
-
+DHTSensor dht;
+SoilSHTSensor soilSHT;
 
 
 //--------------------------------------------------
@@ -71,7 +71,7 @@ bool initializeSystem()
         Serial.println(
             "[ERROR] WiFi Init Failed");
 
-        return false;
+        //return false;
     }
 
     Serial.println(
@@ -82,7 +82,7 @@ bool initializeSystem()
         Serial.println(
             "[ERROR] WiFi Connection Failed");
 
-        return false;
+       // return false;
     }
 
     //--------------------------------------------------
@@ -97,7 +97,7 @@ bool initializeSystem()
         Serial.println(
             "[ERROR] Time Sync Failed");
 
-        return false;
+       // return false;
     }
 
     //--------------------------------------------------
@@ -112,7 +112,7 @@ bool initializeSystem()
         Serial.println(
             "[ERROR] Storage Init Failed");
 
-        return false;
+        //return false;
     }
 
     //--------------------------------------------------
@@ -127,7 +127,7 @@ bool initializeSystem()
         Serial.println(
             "[ERROR] ThingsBoard Init Failed");
 
-        return false;
+       // return false;
     }
 
     cloud.setSuitNumber(
@@ -154,9 +154,32 @@ bool initializeSystem()
         Serial.println(
             "[ERROR] MUX Init Failed");
 
-        return false;
+       // return false;
     }
 
+    //--------------------------------------------------
+    // DHT11 Sensor
+    //--------------------------------------------------
+
+
+    dht.begin();
+
+    //--------------------------------------------------
+    // Soil SHT Sensor
+    //--------------------------------------------------
+    #ifdef SENSOR_BOTTOM
+        Serial.println(
+            "[INFO] Initializing Soil SHT");
+
+        if(!soilSHT.begin())
+        {
+            Serial.println(
+                "[ERROR] Soil SHT Init Failed");
+
+          //  return false;
+        }
+    
+    #endif
     //--------------------------------------------------
     // Solar Sensor
     //--------------------------------------------------
@@ -171,7 +194,7 @@ bool initializeSystem()
             Serial.println(
                 "[ERROR] Solar Sensor Init Failed");
 
-            return false;
+          //  return false;
         }
 
     #endif
@@ -182,12 +205,12 @@ bool initializeSystem()
         Serial.println(
             "[INFO] Initializing CO2 Sensor");
 
-        if(!solar.begin())
+        if(!CO2.begin())
         {
             Serial.println(
                 "[ERROR] CO2 Sensor Init Failed");
 
-            return false;
+        //    return false;
         }
 
     #endif
@@ -199,12 +222,12 @@ bool initializeSystem()
         Serial.println(
             "[INFO] Initializing GPS Sensor");
 
-        if(!solar.begin())
+        if(!GPS.begin())
         {
             Serial.println(
                 "[ERROR] GPS Sensor Init Failed");
 
-            return false;
+        //    return false;
         }
 
     #endif
@@ -683,7 +706,8 @@ void runCycle()
     //--------------------------------------------------
     // Read Environmental Sensors
     //--------------------------------------------------
-
+//while(1)
+{
     if(!mux.readAllChannels())
     {
         Serial.println(
@@ -691,15 +715,112 @@ void runCycle()
 
         setLedWarning();
     }
+}
 
     env_data =
         mux.getAllSensorValues();
 
+
+  
+    //while(1)
+    {   
+    if(dht.read())
+        {
+            float temperature =
+                dht.getTemperature();
+
+            float humidity =
+                dht.getHumidity();
+
+                
+
+            #ifdef SENSOR_TOP
+                env_data.values[6-1] = temperature;
+                env_data.values[7-1] = humidity;
+                
+
+            #endif
+
+            #ifdef SENSOR_MIDDLE
+                env_data.values[10-1] = temperature;
+                env_data.values[11-1] = humidity;
+                
+
+            #endif
+
+            #ifdef SENSOR_BOTTOM
+                env_data.values[8-1] = temperature;
+                env_data.values[9-1] = humidity;
+                
+
+            #endif
+
+            /*Serial.print(
+                "[DHT11] Temperature : ");
+
+            Serial.print(
+                temperature);
+
+            Serial.println(
+                " °C");
+
+            Serial.print(
+                "[DHT11] Humidity    : ");
+
+            Serial.print(
+                humidity);
+
+            Serial.println(
+                " %");*/
+
+
+        }
+    
+    } 
+
+
+
+
+
+    
+    #ifdef SENSOR_BOTTOM  
+ //   while(1)
+ //   { 
+        float soilTemperature = 0.0;
+
+        float soilHumidity = 0.0;
+
+        if(!soilSHT.read())
+        {
+            Serial.println(
+                "[WARNING] Soil SHT Read Failed");
+
+            setLedWarning();
+        }
+        else
+        {
+            soilTemperature =
+                soilSHT.getTemperature();
+
+            soilHumidity =
+                soilSHT.getHumidity();
+        }
+
+        
+        env_data.values[10-1] = soilTemperature;
+        env_data.values[11-1] = soilHumidity;
+
+
+//  }
+    #endif
+    
+   
     
     #ifdef SENSOR_TOP
 
         float solarRadiation = 0.0;
-
+//    while(1)
+    {
         if(!solar.read())
         {
             Serial.println(
@@ -712,14 +833,18 @@ void runCycle()
             solarRadiation =
                 solar.getRadiation();
         }
-
+    }
     #endif
     
     
-    
+
     #ifdef SENSOR_MIDDLE
 
-        int CO2_PPM = 0.0;
+ 
+        int CO2_PPM = 0;  
+
+//    while(1)
+    {
 
         if(!CO2.read())
         {
@@ -733,19 +858,21 @@ void runCycle()
             CO2_PPM =
                 CO2.getPPM();
         }
+    }
 
     #endif   
-    
-     
+
     
     #ifdef SENSOR_BOTTOM
+
+ //   while(1)
 
         float Lat = 0.0;
         float Long = 0.0;
         float HDOP = 0.0;
         float VDOP = 0.0;
         
-        
+//   {       
 
         if(!GPS.read())
         {
@@ -770,6 +897,7 @@ void runCycle()
         
         
         }
+//    }
 
     #endif      
     
@@ -814,7 +942,8 @@ void runCycle()
     #endif
 
 
-    #ifdef SENSOR_BOTTOL
+    #ifdef SENSOR_BOTTOM
+        //float Lat,Long, HDOP, VDOP;
         payload += ",\"Lat\":";
         payload += String(
             Lat);
@@ -829,18 +958,17 @@ void runCycle()
 
         payload += ",\"VDOP\":";
         payload += String(
-            HDOP);
+            VDOP);
 
     #endif
 
     for(uint8_t i=0; i<MUX_CHANNELS; i++)
     {
-        payload += ",\"env";
-        payload += String(i);
+        payload += ",\"";
+        payload += SENSOR_NAMES[i];
         payload += "\":";
-        payload += String(
-            env_data.values[i],
-            2);
+                
+        payload += String( env_data.values[i],1);
     }
 
     payload += "}";
@@ -1066,6 +1194,6 @@ void loop()
 
         runCycle();
 
-        delay(30000);
+        delay(10000);
     }
 }
